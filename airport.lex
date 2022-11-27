@@ -6,14 +6,13 @@
 #define CARGO 104
 #define FREIGHT 105
 
+enum eday_time {A_M,P_M};
+
 int line = 1;
 
-union {
-  int is_am;
-} semantic_vals;
 
 union {
-  char name[30];
+  int DAY_TIME;
 } yylval;
 
 #include <stdlib.h> 
@@ -26,19 +25,19 @@ union {
 
 %%
 
-"<departures>" { strcpy(yylval.name,yytext); return DEPARTUERS; }
+"<departures>" { return DEPARTUERS; }
 
-([A-Z]{2})([0-9]{1,4}) { strcpy(yylval.name,yytext); return FLIGHT_NUMBER;}
+([A-Z]{2})([0-9]{1,4}) {  return FLIGHT_NUMBER;}
 
-(0[0-9]|1[0-2])":"[0-5][0-9]"a.m." { strcpy(yylval.name,yytext); semantic_vals.is_am = 1; return TIME; }
+(0[0-9]|1[0-2])":"[0-5][0-9]"a.m." {  yylval.DAY_TIME = A_M; return TIME; }
 
-(0[0-9]|1[0-2])":"[0-5][0-9]"p.m." { strcpy(yylval.name,yytext); semantic_vals.is_am = 0; return TIME; }
+(0[0-9]|1[0-2])":"[0-5][0-9]"p.m." { yylval.DAY_TIME = P_M; return TIME; }
 
-\"([A-Za-z])([A-Za-z]|" ")*\" { strcpy(yylval.name,yytext); return AIRPORT;}
+\"([A-Za-z])([A-Za-z]|" ")*\" {  return AIRPORT;}
 
-"cargo" { strcpy(yylval.name,yytext); return CARGO; }
+"cargo" {  return CARGO; }
 
-"freight" { strcpy(yylval.name,yytext); return FREIGHT; }
+"freight" {  return FREIGHT; }
 
 \n { line++; }
 
@@ -64,17 +63,17 @@ void main (int argc, char **argv)
 
    while ((token = yylex ()) != 0)
      switch (token) {
-	 case DEPARTUERS:    printf("DEPARTUERS\t\t%s\n",yylval.name);
+	 case DEPARTUERS:    printf("DEPARTUERS\t\t%s\n",yytext);
 	              break;
-         case FLIGHT_NUMBER: printf ("FLIGHT_NUMBER\t\t%s\n",yylval.name);
+         case FLIGHT_NUMBER: printf ("FLIGHT_NUMBER\t\t%s\n",yytext);
 	              break;
-	 case TIME:          printf ("TIME\t\t\t%s\t\t\t%d\n",yylval.name,semantic_vals.is_am);
+	 case TIME:          printf ("TIME\t\t\t%s\t\t\t%s\n",yytext,yylval.DAY_TIME == A_M ? "A.M" : "P.M");
 	              break;
-	 case AIRPORT: 	     printf ("AIRPORT\t\t\t%s\n",yylval.name);
+	 case AIRPORT: 	     printf ("AIRPORT\t\t\t%s\n",yytext);
 	              break;
-	 case CARGO: 	     printf ("CARGO\t\t\t%s\n",yylval.name);
+	 case CARGO: 	     printf ("CARGO\t\t\t%s\n",yytext);
 	              break;
-	 case FREIGHT:       printf ("FREIGHT\t\t\t%s\n",yylval.name);
+	 case FREIGHT:       printf ("FREIGHT\t\t\t%s\n",yytext);
 	              break;		              		              	              
          default: /*error Token defined in yylex */ exit (1);
      } 
@@ -82,4 +81,3 @@ void main (int argc, char **argv)
    exit (0);
 
 }
-
